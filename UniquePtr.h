@@ -8,12 +8,9 @@ namespace Custom {
 template <typename T>
 class UniquePtr {
 public:
-    UniquePtr() = default;
+    UniquePtr() noexcept = default;
 
-    template<typename ... Ts>
-    UniquePtr(Ts&& ... ts) {
-        _ptr = new T(std::forward(ts...));
-    }
+    UniquePtr(T* p_ptr) noexcept : _ptr{p_ptr} {} 
 
     UniquePtr(const UniquePtr&) = delete;
     UniquePtr& operator=(const UniquePtr&) = delete;
@@ -39,29 +36,40 @@ public:
         _ptr = nullptr;
     }
 
-    [[nodiscard]] T* Releast() noexcept {
+    [[nodiscard]] T* Release() noexcept {
         auto ptr = _ptr;
         _ptr = nullptr;
         return ptr;
     }
 
-    auto operator*() -> decltype(auto) requires { *_ptr; }  {
-        return *_ptr;
+    template<class Self>
+    auto&& operator*(this Self&& p_self) noexcept {
+        return *(std::forward<Self>(p_self)._ptr);
     }
 
-    auto operator->() -> decltype(auto) requires { _ptr.operator=(); } {
-        return _ptr;
+    template<class Self>
+    auto&& operator->(this Self&& p_self) noexcept {
+        return std::forward<Self>(p_self)._ptr;
     }
 
-    [[nodiscard]] auto operator bool() -> decltype(auto) const noexcept {
-        return _ptr != nullptr;
+    template<class Self>
+    auto&& operator[](this Self&& p_self, size_t p_index) noexcept requires std::is_array_v<T> {
+        // if constexpr (std::is_array<T>::value)
+            return std::forward<Self>(p_self)._ptr[p_index]; 
     }
+
+    [[nodiscard]] operator bool() const noexcept { return _ptr != nullptr; }
 
     virtual ~UniquePtr() noexcept { delete _ptr; }
 
 protected:
     T* _ptr{nullptr};
 };
+
+template <typename T, typename ... Ts>
+auto MakeUnique(Ts&& ... ts) {
+    return UniquePtr(new T{std::forward<Ts>(ts)...});
+}
 
 }
 
