@@ -2,7 +2,7 @@
 #include <UniquePtr.h>
 
 int main() {
-    Custom::ThreadSafeSharedPtr<int> ptr{new int{2}};
+    Custom::SharedPtr<int> ptr{new int{2}};
     std::cout << "ptr = " << *ptr << '\n';
     auto ptr2 = ptr;
     *ptr2 = 5;

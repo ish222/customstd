@@ -1,5 +1,5 @@
-#ifndef __ThreadSafeSharedPtr__
-#define __ThreadSafeSharedPtr__
+#ifndef __SharedPtr__
+#define __SharedPtr__
 
 #include <atomic>
 #include <utility>
@@ -8,18 +8,18 @@
 namespace Custom {
 
 template <typename T>
-class ThreadSafeSharedPtr {
+class SharedPtr {
 public:
-    ThreadSafeSharedPtr() noexcept = default;
-    ThreadSafeSharedPtr(T* p_ptr) noexcept : _ptr{p_ptr}, _count{new std::atomic_int{1}} {}
+    SharedPtr() noexcept = default;
+    SharedPtr(T* p_ptr) noexcept : _ptr{p_ptr}, _count{new std::atomic_int{1}} {}
     
-    virtual ~ThreadSafeSharedPtr() noexcept { DecrementCount(); }
+    virtual ~SharedPtr() noexcept { DecrementCount(); }
 
-    ThreadSafeSharedPtr(const ThreadSafeSharedPtr& p_other) noexcept {
+    SharedPtr(const SharedPtr& p_other) noexcept {
         Copy(p_other);
     }
 
-    ThreadSafeSharedPtr& operator=(const ThreadSafeSharedPtr& p_other) noexcept {
+    SharedPtr& operator=(const SharedPtr& p_other) noexcept {
         if (this != &p_other) {
             Copy(p_other);
         }
@@ -27,11 +27,11 @@ public:
         return *this;
     }
 
-    ThreadSafeSharedPtr(ThreadSafeSharedPtr&& p_other) noexcept {
+    SharedPtr(SharedPtr&& p_other) noexcept {
         MoveAndReset(p_other);
     }
 
-    ThreadSafeSharedPtr& operator=(ThreadSafeSharedPtr&& p_other) noexcept {
+    SharedPtr& operator=(SharedPtr&& p_other) noexcept {
         if (this != &p_other) {
             MoveAndReset(p_other);
         }
@@ -56,7 +56,7 @@ public:
         _count = _ptr != nullptr ? new std::atomic_int{1} : nullptr;
     }
 
-    void Swap(ThreadSafeSharedPtr& p_other) noexcept {
+    void Swap(SharedPtr& p_other) noexcept {
         std::swap(_ptr, p_other._ptr);
         std::swap(_count, p_other._count);
     }
@@ -92,7 +92,7 @@ protected:
         std::cout << "Shared ptr deleted!\n";
     }
 
-    void Copy(const ThreadSafeSharedPtr& p_other) noexcept {
+    void Copy(const SharedPtr& p_other) noexcept {
         if (_ptr)
             DecrementCount();
 
@@ -104,7 +104,7 @@ protected:
         std::cout << "Shared ptr copied!\n";
     }
 
-    void MoveAndReset(ThreadSafeSharedPtr&& p_other) noexcept {
+    void MoveAndReset(SharedPtr&& p_other) noexcept {
         DecrementCount();
         _ptr = p_other._ptr;
         _count = p_other._count;
